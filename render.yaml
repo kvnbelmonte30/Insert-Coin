@@ -1,0 +1,52 @@
+# Render Blueprint — deploys backend, frontend and database together.
+# In Render: New -> Blueprint -> connect this repo -> it reads this file automatically.
+#
+# NOTE: Render URLs normally follow https://<name>.onrender.com using the `name`
+# below, but if that name is already taken globally Render appends a suffix.
+# After the first deploy, confirm the two real URLs and update CORS_ORIGINS /
+# VITE_API_URL below (or directly in the Render dashboard) if they differ.
+
+services:
+  - type: web
+    name: maquinitas-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: maquinitas-db
+          property: connectionString
+      - key: Jwt__Key
+        generateValue: true
+      - key: Jwt__Issuer
+        value: Maquinitas.Api
+      - key: Jwt__Audience
+        value: Maquinitas.Client
+      - key: CORS_ORIGINS
+        value: https://maquinitas-frontend.onrender.com
+      - key: FileStorage__BasePath
+        value: App_Data/uploads
+
+  - type: web
+    name: maquinitas-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://maquinitas-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: maquinitas-db
+    plan: free
+    databaseName: maquinitas
+    user: maquinitas

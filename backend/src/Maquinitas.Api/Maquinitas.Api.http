@@ -1,0 +1,6 @@
+@Maquinitas.Api_HostAddress = http://localhost:5070
+
+GET {{Maquinitas.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
