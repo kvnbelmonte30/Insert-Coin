@@ -5,8 +5,8 @@ using Maquinitas.Domain.Entities.Locales;
 namespace Maquinitas.Domain.Entities.Maquinas;
 
 /// <summary>
-/// Corte financiero de una máquina específica: lo que salió de ELLA (premios y/o efectivo), sección "la
-/// cuenta siempre suma". Es un registro adicional, independiente del cierre diario/semanal por local.
+/// Corte financiero de una máquina específica: el total sacado de ELLA. Es un registro adicional,
+/// independiente del cierre diario/semanal por local.
 /// </summary>
 public class CorteMaquina : EntityBase
 {
@@ -23,6 +23,4 @@ public class CorteMaquina : EntityBase
     public string? Comentario { get; set; }
     public decimal Total { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
-
-    public ICollection<CorteMaquinaDetalle> Detalles { get; set; } = new List<CorteMaquinaDetalle>();
 }

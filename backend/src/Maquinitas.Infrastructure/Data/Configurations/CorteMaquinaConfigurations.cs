@@ -26,26 +26,3 @@ public class CorteMaquinaConfiguration : IEntityTypeConfiguration<CorteMaquina>
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
-
-public class CorteMaquinaDetalleConfiguration : IEntityTypeConfiguration<CorteMaquinaDetalle>
-{
-    public void Configure(EntityTypeBuilder<CorteMaquinaDetalle> builder)
-    {
-        builder.Ignore(d => d.Subtotal);
-
-        builder.HasOne(d => d.CorteMaquina)
-            .WithMany(c => c.Detalles)
-            .HasForeignKey(d => d.CorteMaquinaId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(d => d.Denominacion)
-            .WithMany()
-            .HasForeignKey(d => d.DenominacionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(d => d.Premio)
-            .WithMany()
-            .HasForeignKey(d => d.PremioId)
-            .OnDelete(DeleteBehavior.Restrict);
-    }
-}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -17,6 +17,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     </Typography>
   );
 }
+
+const valorDenominacion = (d: Denominacion) => (d.tipo === "Bolsa" ? d.valorPorBolsa ?? 0 : d.valor);
 
 export function CierreSemanalEmpleadoPage() {
   const locales = useAuthStore((s) => s.locales);
@@ -52,6 +54,13 @@ export function CierreSemanalEmpleadoPage() {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localId]);
+
+  const totalCapturado = useMemo(() => {
+    const totalDenominaciones = denominaciones.reduce((sum, d) => sum + (cantidades[d.id] ?? 0) * valorDenominacion(d), 0);
+    const totalPremios = premios.reduce((sum, p) => sum + (cantidades[p.id] ?? 0) * p.denominacion, 0);
+    const totalPuestos = premios.reduce((sum, p) => sum + (puestos[p.id] ?? 0) * p.denominacion, 0);
+    return totalDenominaciones + totalPremios + totalPuestos + (terminal || 0) + (transferencia || 0);
+  }, [denominaciones, premios, cantidades, puestos, terminal, transferencia]);
 
   const construirLineas = () => [
     ...denominaciones.filter((d) => (cantidades[d.id] ?? 0) > 0).map((d) => ({
@@ -196,7 +205,25 @@ export function CierreSemanalEmpleadoPage() {
             ))}
           </Box>
 
-          <Box sx={{ mt: 3 }}>
+          <Box
+            sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: "1px solid rgba(14,23,48,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: brand.inkFaint, textTransform: "uppercase", letterSpacing: "0.4px" }}>
+              Total capturado hasta ahora
+            </Typography>
+            <Typography sx={{ fontSize: "1.25rem", fontWeight: 800, color: brand.goldDark }}>
+              ${totalCapturado.toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
             {cierreActual ? (
               <Box component="button" onClick={corregir} sx={pillButtonSx}>
                 Guardar corrección

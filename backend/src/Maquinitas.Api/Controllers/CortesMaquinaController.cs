@@ -49,9 +49,9 @@ public class CortesMaquinaController : ControllerBase
         if (maquina is null) return NotFound();
         if (!CurrentUser.HasAccessToLocal(User, maquina.LocalId)) return Forbid();
 
-        if (request.Lineas.Count == 0)
+        if (request.Total <= 0)
         {
-            return BadRequest(new { message = "El corte debe tener al menos una línea con cantidad." });
+            return BadRequest(new { message = "El total del corte debe ser mayor a cero." });
         }
 
         var corte = new CorteMaquina
@@ -60,22 +60,9 @@ public class CortesMaquinaController : ControllerBase
             LocalId = maquina.LocalId,
             RegistradoPorId = CurrentUser.GetId(User),
             Fecha = request.Fecha,
-            Comentario = request.Comentario
+            Comentario = request.Comentario,
+            Total = request.Total
         };
-
-        foreach (var linea in request.Lineas)
-        {
-            var (valorUnitario, cantidad) = await ResolverLinea(linea);
-            corte.Detalles.Add(new CorteMaquinaDetalle
-            {
-                DenominacionId = linea.DenominacionId,
-                PremioId = linea.PremioId,
-                Cantidad = cantidad,
-                ValorUnitario = valorUnitario
-            });
-        }
-
-        corte.Total = corte.Detalles.Sum(d => d.Subtotal);
 
         _db.CortesMaquina.Add(corte);
         await _db.SaveChangesAsync();
@@ -87,32 +74,10 @@ public class CortesMaquinaController : ControllerBase
         return Ok(ToDto(completo));
     }
 
-    private async Task<(decimal valorUnitario, int cantidad)> ResolverLinea(LineaCorteMaquinaRequest linea)
-    {
-        if (linea.DenominacionId is not null)
-        {
-            var d = await _db.Denominaciones.FindAsync(linea.DenominacionId.Value);
-            if (d is null) throw new InvalidOperationException("Denominación no encontrada.");
-            var valor = d.Tipo == TipoDenominacion.Bolsa ? (d.ValorPorBolsa ?? 0) : d.Valor;
-            return (valor, linea.Cantidad);
-        }
-
-        if (linea.PremioId is not null)
-        {
-            var p = await _db.Premios.FindAsync(linea.PremioId.Value);
-            if (p is null) throw new InvalidOperationException("Premio no encontrado.");
-            return (p.Denominacion, linea.Cantidad);
-        }
-
-        throw new InvalidOperationException("Línea inválida: falta denominación o premio.");
-    }
-
     private IQueryable<CorteMaquina> BaseQuery() => _db.CortesMaquina
         .Include(c => c.Maquina)
         .Include(c => c.Local)
-        .Include(c => c.RegistradoPor)
-        .Include(c => c.Detalles).ThenInclude(d => d.Denominacion)
-        .Include(c => c.Detalles).ThenInclude(d => d.Premio);
+        .Include(c => c.RegistradoPor);
 
     private static CorteMaquinaDto ToDto(CorteMaquina c) => new()
     {
@@ -125,14 +90,6 @@ public class CortesMaquinaController : ControllerBase
         Fecha = c.Fecha,
         Comentario = c.Comentario,
         Total = c.Total,
-        FechaCreacion = c.FechaCreacion,
-        Detalles = c.Detalles.Select(d => new CorteMaquinaDetalleDto
-        {
-            DenominacionNombre = d.Denominacion is null ? null : $"{d.Denominacion.Tipo} ${d.Denominacion.Valor:0.##}",
-            PremioNombre = d.Premio?.Nombre,
-            Cantidad = d.Cantidad,
-            ValorUnitario = d.ValorUnitario,
-            Subtotal = d.Subtotal
-        }).ToList()
+        FechaCreacion = c.FechaCreacion
     };
 }

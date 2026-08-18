@@ -165,14 +165,6 @@ export interface ReporteAveria {
   evidenciaUrls: string[];
 }
 
-export interface CorteMaquinaDetalle {
-  denominacionNombre: string | null;
-  premioNombre: string | null;
-  cantidad: number;
-  valorUnitario: number;
-  subtotal: number;
-}
-
 export interface CorteMaquina {
   id: string;
   maquinaId: string;
@@ -184,7 +176,6 @@ export interface CorteMaquina {
   comentario: string | null;
   total: number;
   fechaCreacion: string;
-  detalles: CorteMaquinaDetalle[];
 }
 
 export interface MaquinaPremioConfig {
