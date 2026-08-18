@@ -191,9 +191,19 @@ export function DashboardPage() {
           </Box>
 
           <GlassCard sx={{ p: { xs: 2, sm: 2.5 } }}>
-            <Typography sx={{ fontWeight: 700, color: brand.ink, mb: 1.5, fontSize: "0.95rem" }}>
-              Total acumulado por local (semana actual)
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: 2 }}>
+              <Typography sx={{ fontWeight: 700, color: brand.ink, fontSize: "0.95rem" }}>
+                Cuenta de la semana por local
+              </Typography>
+              <Box sx={{ textAlign: "right" }}>
+                <Typography sx={{ fontSize: "0.68rem", color: brand.inkMuted, textTransform: "uppercase", letterSpacing: "0.4px" }}>
+                  Total general
+                </Typography>
+                <Typography sx={{ fontWeight: 800, color: "#1b7a4d", fontSize: "1.3rem", lineHeight: 1.1 }}>
+                  ${data.totalAcumuladoSemanaActual.toLocaleString()}
+                </Typography>
+              </Box>
+            </Box>
             {data.totalesPorLocal.map((t) => (
               <Box key={t.localId} sx={{ display: "flex", justifyContent: "space-between", py: 0.7 }}>
                 <Typography sx={{ fontSize: "0.85rem", color: brand.inkMuted }}>
@@ -252,7 +262,7 @@ export function DashboardPage() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" },
+                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)" },
                 gap: 1.6,
                 mb: 2,
                 opacity: propLoading ? 0.6 : 1,
@@ -271,12 +281,6 @@ export function DashboardPage() {
                 label="Tiempo prom. reparación"
                 value={propData.tiempoPromedioReparacionHoras !== null ? `${propData.tiempoPromedioReparacionHoras} h` : "—"}
                 tone="info"
-              />
-              <StatCard
-                icon={<StorefrontRoundedIcon fontSize="small" />}
-                label="Acumulado en sus locales"
-                value={`$${propData.totalAcumuladoLocalesOperando.toLocaleString()}`}
-                tone="success"
               />
             </Box>
 
@@ -306,15 +310,14 @@ export function DashboardPage() {
 
               <GlassCard sx={{ p: { xs: 2, sm: 2.5 } }}>
                 <Typography sx={{ fontWeight: 700, color: brand.ink, mb: 2, fontSize: "0.95rem" }}>
-                  Total acumulado por local (semana actual)
+                  Máquinas con más reportes (30 días)
                 </Typography>
                 <BarRows
-                  rows={propData.totalesPorLocalOperando.map((t) => ({
-                    label: t.localNombre,
-                    value: t.totalAcumulado,
-                    sublabel: "",
-                  }))}
-                  emptyLabel="Sus locales no tienen cuenta configurada todavía."
+                  rows={propData.maquinas
+                    .filter((m) => m.averiasUltimos30Dias > 0)
+                    .slice(0, 5)
+                    .map((m) => ({ label: m.nombre, value: m.averiasUltimos30Dias, sublabel: "reportes" }))}
+                  emptyLabel="Sin averías reportadas en los últimos 30 días."
                 />
               </GlassCard>
             </Box>

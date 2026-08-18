@@ -19,6 +19,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CasinoRoundedIcon from "@mui/icons-material/CasinoRounded";
 import PersonAddRoundedIcon from "@mui/icons-material/PersonAddRounded";
+import ContentCutRoundedIcon from "@mui/icons-material/ContentCutRounded";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { GlassCard } from "../../components/GlassCard";
@@ -187,16 +188,26 @@ export function MaquinasPage() {
                   </Select>
                 </TableCell>
                 <TableCell align="right">
-                  {m.tipoMaquinaNombre === "Cascada" && (
+                  <Box sx={{ display: "flex", gap: 0.7, justifyContent: "flex-end" }}>
+                    {m.tipoMaquinaNombre === "Cascada" && (
+                      <Box
+                        component="button"
+                        onClick={() => navigate(`/admin/maquinas/${m.id}/cascada`)}
+                        sx={{ ...pillOutlineButtonSx, py: 0.5, px: 1.4, fontSize: "0.75rem" }}
+                      >
+                        <CasinoRoundedIcon sx={{ fontSize: 15 }} />
+                        Premios
+                      </Box>
+                    )}
                     <Box
                       component="button"
-                      onClick={() => navigate(`/admin/maquinas/${m.id}/cascada`)}
+                      onClick={() => navigate(`/admin/maquinas/${m.id}/cortes`)}
                       sx={{ ...pillOutlineButtonSx, py: 0.5, px: 1.4, fontSize: "0.75rem" }}
                     >
-                      <CasinoRoundedIcon sx={{ fontSize: 15 }} />
-                      Premios
+                      <ContentCutRoundedIcon sx={{ fontSize: 15 }} />
+                      Cortes
                     </Box>
-                  )}
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}

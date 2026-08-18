@@ -7,6 +7,7 @@ import { LocalesPage } from "./pages/admin/LocalesPage";
 import { LocalDetailPage } from "./pages/admin/LocalDetailPage";
 import { MaquinasPage } from "./pages/admin/MaquinasPage";
 import { CascadaConfigPage } from "./pages/admin/CascadaConfigPage";
+import { CortesMaquinaAdminPage } from "./pages/admin/CortesMaquinaAdminPage";
 import { AveriasAdminPage } from "./pages/admin/AveriasAdminPage";
 import { GastosAdminPage } from "./pages/admin/GastosAdminPage";
 import { CierresSemanalesPage } from "./pages/admin/CierresSemanalesPage";
@@ -15,6 +16,7 @@ import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
 import { EmpleadoPage } from "./pages/empleado/EmpleadoPage";
 import { AveriasEmpleadoPage } from "./pages/empleado/AveriasEmpleadoPage";
 import { CascadasEmpleadoPage } from "./pages/empleado/CascadasEmpleadoPage";
+import { CorteMaquinaEmpleadoPage } from "./pages/empleado/CorteMaquinaEmpleadoPage";
 import { CierreSemanalEmpleadoPage } from "./pages/empleado/CierreSemanalEmpleadoPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/Layout";
@@ -73,6 +75,7 @@ export default function App() {
             <Route path="locales/:id" element={<LocalDetailPage />} />
             <Route path="maquinas" element={<MaquinasPage />} />
             <Route path="maquinas/:id/cascada" element={<CascadaConfigPage />} />
+            <Route path="maquinas/:id/cortes" element={<CortesMaquinaAdminPage />} />
             <Route path="averias" element={<AveriasAdminPage />} />
             <Route path="gastos" element={<GastosAdminPage />} />
             <Route path="cierres-semanales" element={<CierresSemanalesPage />} />
@@ -93,6 +96,7 @@ export default function App() {
             <Route path="cuenta" element={<EmpleadoPage />} />
             <Route path="averias" element={<AveriasEmpleadoPage />} />
             <Route path="cascadas" element={<CascadasEmpleadoPage />} />
+            <Route path="cortes" element={<CorteMaquinaEmpleadoPage />} />
             <Route path="cierre-semanal" element={<CierreSemanalEmpleadoPage />} />
           </Route>
 

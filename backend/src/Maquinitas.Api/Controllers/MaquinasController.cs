@@ -55,10 +55,10 @@ public class MaquinasController : ControllerBase
             if (!CurrentUser.HasAccessToLocal(User, localId.Value)) return Forbid();
             query = query.Where(m => m.LocalId == localId);
         }
-        else if (!CurrentUser.IsAdmin(User))
+        else
         {
-            var localIds = CurrentUser.GetLocalIds(User);
-            query = query.Where(m => localIds.Contains(m.LocalId));
+            var visibleIds = CurrentUser.GetVisibleLocalIds(User);
+            if (visibleIds is not null) query = query.Where(m => visibleIds.Contains(m.LocalId));
         }
 
         if (propietarioId is not null) query = query.Where(m => m.PropietarioId == propietarioId);

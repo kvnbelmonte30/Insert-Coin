@@ -2,7 +2,6 @@ using Maquinitas.Api.Common;
 using Maquinitas.Api.Dtos.Dashboard;
 using Maquinitas.Domain.Common;
 using Maquinitas.Domain.Entities.Averias;
-using Maquinitas.Domain.Entities.Cuentas;
 using Maquinitas.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -26,28 +25,56 @@ public class DashboardController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<DashboardDto>> Get()
     {
-        var locales = await _db.Locales.CountAsync(l => l.Activo);
-        var maquinas = await _db.Maquinas.CountAsync(m => m.Activo);
+        var visibleIds = CurrentUser.GetVisibleLocalIds(User);
+
+        var localesQuery = _db.Locales.Where(l => l.Activo);
+        var maquinasQuery = _db.Maquinas.Where(m => m.Activo);
+        var cierresQuery = _db.CierresDiarios.AsQueryable();
+        var gastosQuery = _db.Gastos.Where(g => !g.Evidencias.Any());
+        var cuentasQuery = _db.Cuentas.Include(c => c.Local).Include(c => c.Semana).Include(c => c.Detalles).Where(c => c.Activa);
+
+        if (visibleIds is not null)
+        {
+            localesQuery = localesQuery.Where(l => visibleIds.Contains(l.Id));
+            maquinasQuery = maquinasQuery.Where(m => visibleIds.Contains(m.LocalId));
+            cierresQuery = cierresQuery.Where(c => visibleIds.Contains(c.LocalId));
+            gastosQuery = gastosQuery.Where(g => visibleIds.Contains(g.LocalId));
+            cuentasQuery = cuentasQuery.Where(c => visibleIds.Contains(c.LocalId));
+        }
+
+        var locales = await localesQuery.CountAsync();
+        var maquinas = await maquinasQuery.CountAsync();
 
         var empleadosRoleId = await _db.Roles.Where(r => r.Name == Roles.Empleado).Select(r => r.Id).FirstOrDefaultAsync();
-        var empleados = empleadosRoleId == Guid.Empty
-            ? 0
-            : await _db.UserRoles.CountAsync(ur => ur.RoleId == empleadosRoleId);
+        int empleados;
+        if (empleadosRoleId == Guid.Empty)
+        {
+            empleados = 0;
+        }
+        else if (visibleIds is null)
+        {
+            empleados = await _db.UserRoles.CountAsync(ur => ur.RoleId == empleadosRoleId);
+        }
+        else
+        {
+            empleados = await _db.UserRoles
+                .Where(ur => ur.RoleId == empleadosRoleId)
+                .Join(_db.UsuarioLocales, ur => ur.UserId, ul => ul.UsuarioId, (ur, ul) => ul)
+                .Where(ul => visibleIds.Contains(ul.LocalId))
+                .Select(ul => ul.UsuarioId)
+                .Distinct()
+                .CountAsync();
+        }
 
-        var cierresCorrectos = await _db.CierresDiarios.CountAsync(c => c.Estado == EstadoCierre.Correcto);
-        var cierresConDiferencia = await _db.CierresDiarios.CountAsync(c => c.Estado == EstadoCierre.Revisar);
+        var cierresCorrectos = await cierresQuery.CountAsync(c => c.Estado == EstadoCierre.Correcto);
+        var cierresConDiferencia = await cierresQuery.CountAsync(c => c.Estado == EstadoCierre.Revisar);
 
-        var maquinasAveriadas = await _db.Maquinas.CountAsync(m => m.Estado == EstadoMaquina.Reportada);
-        var maquinasEnReparacion = await _db.Maquinas.CountAsync(m => m.Estado == EstadoMaquina.EnReparacion);
+        var maquinasAveriadas = await maquinasQuery.CountAsync(m => m.Estado == EstadoMaquina.Reportada);
+        var maquinasEnReparacion = await maquinasQuery.CountAsync(m => m.Estado == EstadoMaquina.EnReparacion);
 
-        var gastosPendientes = await _db.Gastos.CountAsync(g => !g.Evidencias.Any());
+        var gastosPendientes = await gastosQuery.CountAsync();
 
-        var cuentasActivas = await _db.Cuentas
-            .Include(c => c.Local)
-            .Include(c => c.Semana)
-            .Include(c => c.Detalles)
-            .Where(c => c.Activa)
-            .ToListAsync();
+        var cuentasActivas = await cuentasQuery.ToListAsync();
 
         var totalesPorLocal = cuentasActivas.Select(c => new TotalPorLocalDto
         {
@@ -75,16 +102,23 @@ public class DashboardController : ControllerBase
     [HttpGet("propietarios")]
     public async Task<ActionResult<IEnumerable<PropietarioResumenDto>>> GetPropietarios()
     {
+        var visibleIds = CurrentUser.GetVisibleLocalIds(User);
+
         var propietarios = await _db.Propietarios
             .Where(p => p.Activo)
             .Select(p => new PropietarioResumenDto
             {
                 Id = p.Id,
                 Nombre = p.Nombre,
-                TotalMaquinas = p.Maquinas.Count(m => m.Activo)
+                TotalMaquinas = p.Maquinas.Count(m => m.Activo && (visibleIds == null || visibleIds.Contains(m.LocalId)))
             })
             .OrderBy(p => p.Nombre)
             .ToListAsync();
+
+        if (visibleIds is not null)
+        {
+            propietarios = propietarios.Where(p => p.TotalMaquinas > 0).ToList();
+        }
 
         return Ok(propietarios);
     }
@@ -121,11 +155,14 @@ public class DashboardController : ControllerBase
         var propietario = await _db.Propietarios.FindAsync(propietarioId);
         if (propietario is null) return NotFound();
 
-        var maquinas = await _db.Maquinas
+        var visibleIds = CurrentUser.GetVisibleLocalIds(User);
+        var maquinasQuery = _db.Maquinas
             .Include(m => m.TipoMaquina)
             .Include(m => m.Local)
-            .Where(m => m.PropietarioId == propietarioId && m.Activo)
-            .ToListAsync();
+            .Where(m => m.PropietarioId == propietarioId && m.Activo);
+        if (visibleIds is not null) maquinasQuery = maquinasQuery.Where(m => visibleIds.Contains(m.LocalId));
+
+        var maquinas = await maquinasQuery.ToListAsync();
 
         var maquinaIds = maquinas.Select(m => m.Id).ToList();
 
@@ -182,24 +219,6 @@ public class DashboardController : ControllerBase
 
         var tiempoPromedio = await CalcularTiempoPromedioReparacionAsync(maquinaIds);
 
-        var localIds = maquinas.Select(m => m.LocalId).Distinct().ToList();
-        var cuentasActivas = localIds.Count == 0
-            ? new List<Cuenta>()
-            : await _db.Cuentas
-                .Include(c => c.Local)
-                .Include(c => c.Semana)
-                .Include(c => c.Detalles)
-                .Where(c => c.Activa && localIds.Contains(c.LocalId))
-                .ToListAsync();
-
-        var totalesPorLocal = cuentasActivas.Select(c => new TotalPorLocalDto
-        {
-            LocalId = c.LocalId,
-            LocalNombre = c.Local.Nombre,
-            SemanaNumero = c.Semana.Numero,
-            TotalAcumulado = c.Detalles.Sum(d => d.Subtotal)
-        }).ToList();
-
         return Ok(new PropietarioDashboardDto
         {
             PropietarioId = propietario.Id,
@@ -211,9 +230,7 @@ public class DashboardController : ControllerBase
             AveriasUltimos30Dias = averias.Count(a => a.Fecha >= desde30),
             AveriasUltimos90Dias = averias.Count(a => a.Fecha >= desde90),
             AveriasPorSemana = tendencia,
-            TiempoPromedioReparacionHoras = tiempoPromedio,
-            TotalesPorLocalOperando = totalesPorLocal,
-            TotalAcumuladoLocalesOperando = totalesPorLocal.Sum(t => t.TotalAcumulado)
+            TiempoPromedioReparacionHoras = tiempoPromedio
         });
     }
 

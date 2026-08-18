@@ -30,10 +30,10 @@ public class LocalesController : ControllerBase
     {
         IQueryable<Local> query = _db.Locales.Include(l => l.Semanas);
 
-        if (!CurrentUser.IsAdmin(User))
+        var visibleIds = CurrentUser.GetVisibleLocalIds(User);
+        if (visibleIds is not null)
         {
-            var localIds = CurrentUser.GetLocalIds(User);
-            query = query.Where(l => localIds.Contains(l.Id));
+            query = query.Where(l => visibleIds.Contains(l.Id));
         }
 
         var locales = await query.OrderBy(l => l.Nombre).ToListAsync();

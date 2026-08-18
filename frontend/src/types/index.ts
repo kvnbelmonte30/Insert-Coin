@@ -165,6 +165,28 @@ export interface ReporteAveria {
   evidenciaUrls: string[];
 }
 
+export interface CorteMaquinaDetalle {
+  denominacionNombre: string | null;
+  premioNombre: string | null;
+  cantidad: number;
+  valorUnitario: number;
+  subtotal: number;
+}
+
+export interface CorteMaquina {
+  id: string;
+  maquinaId: string;
+  maquinaNombre: string;
+  localId: string;
+  localNombre: string;
+  empleadoNombre: string;
+  fecha: string;
+  comentario: string | null;
+  total: number;
+  fechaCreacion: string;
+  detalles: CorteMaquinaDetalle[];
+}
+
 export interface MaquinaPremioConfig {
   id: string;
   premioId: string;
@@ -278,6 +300,4 @@ export interface PropietarioDashboardData {
   averiasUltimos90Dias: number;
   averiasPorSemana: AveriaTendencia[];
   tiempoPromedioReparacionHoras: number | null;
-  totalesPorLocalOperando: { localId: string; localNombre: string; semanaNumero: number; totalAcumulado: number }[];
-  totalAcumuladoLocalesOperando: number;
 }

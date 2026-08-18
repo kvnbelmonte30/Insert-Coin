@@ -42,6 +42,4 @@ public class PropietarioDashboardDto
     public int AveriasUltimos90Dias { get; set; }
     public IList<AveriaTendenciaDto> AveriasPorSemana { get; set; } = new List<AveriaTendenciaDto>();
     public double? TiempoPromedioReparacionHoras { get; set; }
-    public IList<TotalPorLocalDto> TotalesPorLocalOperando { get; set; } = new List<TotalPorLocalDto>();
-    public decimal TotalAcumuladoLocalesOperando { get; set; }
 }

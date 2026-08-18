@@ -28,6 +28,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TipoMaquina> TiposMaquina => Set<TipoMaquina>();
     public DbSet<Maquina> Maquinas => Set<Maquina>();
     public DbSet<HistorialEstadoMaquina> HistorialEstadosMaquina => Set<HistorialEstadoMaquina>();
+    public DbSet<CorteMaquina> CortesMaquina => Set<CorteMaquina>();
+    public DbSet<CorteMaquinaDetalle> CorteMaquinaDetalles => Set<CorteMaquinaDetalle>();
 
     public DbSet<Premio> Premios => Set<Premio>();
     public DbSet<MaquinaPremio> MaquinaPremios => Set<MaquinaPremio>();

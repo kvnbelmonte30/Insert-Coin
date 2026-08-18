@@ -13,6 +13,7 @@ import EventRepeatRoundedIcon from "@mui/icons-material/EventRepeatRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import WavesRoundedIcon from "@mui/icons-material/WavesRounded";
+import ContentCutRoundedIcon from "@mui/icons-material/ContentCutRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
@@ -40,6 +41,7 @@ const EMPLEADO_NAV: NavItem[] = [
   { value: "cuenta", label: "Mi cuenta", icon: <AccountBalanceWalletRoundedIcon fontSize="small" /> },
   { value: "averias", label: "Averías", icon: <ReportProblemRoundedIcon fontSize="small" /> },
   { value: "cascadas", label: "Cascadas", icon: <WavesRoundedIcon fontSize="small" /> },
+  { value: "cortes", label: "Corte de máquina", icon: <ContentCutRoundedIcon fontSize="small" /> },
   { value: "cierre-semanal", label: "Cierre semanal", icon: <EventRepeatRoundedIcon fontSize="small" /> },
 ];
 
