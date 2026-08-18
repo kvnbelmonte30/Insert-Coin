@@ -48,14 +48,6 @@ public enum TipoNotificacion
     CierreSemanalPendiente
 }
 
-public enum TipoGasto
-{
-    General,
-    ReposicionFondo,
-    Sueldos,
-    DepositoAdministrador
-}
-
 public static class Roles
 {
     public const string Administrador = "Administrador";

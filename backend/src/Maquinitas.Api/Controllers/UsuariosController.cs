@@ -143,6 +143,9 @@ public class UsuariosController : ControllerBase
             return BadRequest(new { message = string.Join("; ", addResult.Errors.Select(e => e.Description)) });
         }
 
+        user.DebeCambiarContrasena = true;
+        await _userManager.UpdateAsync(user);
+
         await _auditoria.RegistrarAsync(
             CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
             "Contraseña restablecida", nameof(ApplicationUser), user.Id.ToString(), null, null);

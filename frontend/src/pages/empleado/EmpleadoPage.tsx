@@ -25,8 +25,8 @@ import { GlassCard } from "../../components/GlassCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import { brand, dialogBackdropSx, dialogPaperSx, glassFieldLight, glassTableSx, pillButtonSx, pillOutlineButtonSx } from "../../theme/brand";
-import { etiquetaConcepto, ordenarDetalles, TIPO_GASTO_LABEL } from "../../utils/cuenta";
-import type { Cuenta, Denominacion, Gasto, Premio, CierreDiario, TipoGasto } from "../../types";
+import { etiquetaConcepto, ordenarDetalles } from "../../utils/cuenta";
+import type { Cuenta, CategoriaGasto, Denominacion, Gasto, Premio, CierreDiario } from "../../types";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -251,7 +251,7 @@ export function EmpleadoPage() {
                       <TableCell sx={{ fontWeight: 600 }}>
                         {g.descripcion}
                         <Typography component="div" sx={{ fontSize: "0.72rem", color: brand.inkMuted, fontWeight: 400 }}>
-                          {TIPO_GASTO_LABEL[g.tipo]}
+                          {g.categoriaGastoNombre}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">${g.monto.toLocaleString()}</TableCell>
@@ -360,10 +360,19 @@ function GastoDialog({
   onGuardado: () => void;
 }) {
   const [descripcion, setDescripcion] = useState("");
-  const [tipo, setTipo] = useState<TipoGasto>("General");
+  const [categorias, setCategorias] = useState<CategoriaGasto[]>([]);
+  const [categoriaGastoId, setCategoriaGastoId] = useState("");
   const [monto, setMonto] = useState<number>(0);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    api.get<CategoriaGasto[]>("/catalogos/categorias-gasto").then((r) => {
+      setCategorias(r.data);
+      setCategoriaGastoId((prev) => prev || r.data[0]?.id || "");
+    });
+  }, [open]);
 
   const guardar = async () => {
     setSaving(true);
@@ -371,14 +380,13 @@ function GastoDialog({
       const formData = new FormData();
       formData.append("LocalId", localId);
       formData.append("Descripcion", descripcion);
-      formData.append("Tipo", tipo);
+      formData.append("CategoriaGastoId", categoriaGastoId);
       formData.append("Monto", String(monto));
       formData.append("Fecha", new Date().toISOString().slice(0, 10));
       if (archivo) formData.append("evidencias", archivo);
 
       await api.post("/gastos", formData, { headers: { "Content-Type": "multipart/form-data" } });
       setDescripcion("");
-      setTipo("General");
       setMonto(0);
       setArchivo(null);
       onGuardado();
@@ -429,10 +437,10 @@ function GastoDialog({
         />
         <FormControl fullWidth margin="dense" sx={glassFieldLight}>
           <InputLabel>Tipo de gasto</InputLabel>
-          <Select label="Tipo de gasto" value={tipo} onChange={(e) => setTipo(e.target.value as TipoGasto)}>
-            {(Object.keys(TIPO_GASTO_LABEL) as TipoGasto[]).map((t) => (
-              <MenuItem key={t} value={t}>
-                {TIPO_GASTO_LABEL[t]}
+          <Select label="Tipo de gasto" value={categoriaGastoId} onChange={(e) => setCategoriaGastoId(e.target.value)}>
+            {categorias.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.nombre}
               </MenuItem>
             ))}
           </Select>
@@ -454,7 +462,7 @@ function GastoDialog({
         <Box
           component="button"
           onClick={guardar}
-          disabled={!descripcion || monto <= 0 || saving}
+          disabled={!descripcion || !categoriaGastoId || monto <= 0 || saving}
           sx={{ ...pillButtonSx, width: "100%", justifyContent: "center", mt: 3, py: 1.3, fontSize: "0.95rem" }}
         >
           {saving ? "Guardando..." : "Guardar gasto"}

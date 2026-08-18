@@ -1,5 +1,3 @@
-import type { TipoGasto } from "../types";
-
 const ORDEN_TIPO: Record<string, number> = { Bolsa: 0, Moneda: 1, Premio: 2, Billete: 3 };
 
 interface DetalleOrdenable {
@@ -32,10 +30,3 @@ export function etiquetaConcepto(d: { denominacionNombre?: string | null; premio
   if (d.premioNombre) return `Premio ${d.premioNombre}`;
   return "";
 }
-
-export const TIPO_GASTO_LABEL: Record<TipoGasto, string> = {
-  General: "Gasto general",
-  ReposicionFondo: "Reposición de fondo de máquina",
-  Sueldos: "Sueldos de empleados",
-  DepositoAdministrador: "Depósito a administrador",
-};

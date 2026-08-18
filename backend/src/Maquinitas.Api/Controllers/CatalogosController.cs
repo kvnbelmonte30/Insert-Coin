@@ -1,8 +1,10 @@
 using Maquinitas.Api.Common;
 using Maquinitas.Api.Dtos.Catalogos;
+using Maquinitas.Api.Dtos.Gastos;
 using Maquinitas.Api.Services;
 using Maquinitas.Domain.Common;
 using Maquinitas.Domain.Entities.Cuentas;
+using Maquinitas.Domain.Entities.Gastos;
 using Maquinitas.Domain.Entities.Premios;
 using Maquinitas.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -147,6 +149,63 @@ public class CatalogosController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("categorias-gasto")]
+    public async Task<ActionResult<IEnumerable<CategoriaGastoDto>>> GetCategoriasGasto([FromQuery] bool soloActivas = true)
+    {
+        var query = _db.CategoriasGasto.AsQueryable();
+        if (soloActivas) query = query.Where(c => c.Activo);
+
+        var lista = await query.OrderBy(c => c.Nombre).ToListAsync();
+        return Ok(lista.Select(ToDto));
+    }
+
+    [HttpPost("categorias-gasto")]
+    [Authorize(Roles = Roles.Administrador)]
+    public async Task<ActionResult<CategoriaGastoDto>> CrearCategoriaGasto(GuardarCategoriaGastoRequest request)
+    {
+        var categoria = new CategoriaGasto { Nombre = request.Nombre };
+        _db.CategoriasGasto.Add(categoria);
+        await _db.SaveChangesAsync();
+
+        await _auditoria.RegistrarAsync(CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
+            "Categoría de gasto creada", nameof(CategoriaGasto), categoria.Id.ToString(), null, ToDto(categoria));
+
+        return Ok(ToDto(categoria));
+    }
+
+    [HttpPut("categorias-gasto/{id:guid}")]
+    [Authorize(Roles = Roles.Administrador)]
+    public async Task<ActionResult<CategoriaGastoDto>> ActualizarCategoriaGasto(Guid id, GuardarCategoriaGastoRequest request)
+    {
+        var categoria = await _db.CategoriasGasto.FindAsync(id);
+        if (categoria is null) return NotFound();
+
+        var anterior = ToDto(categoria);
+        categoria.Nombre = request.Nombre;
+        await _db.SaveChangesAsync();
+
+        await _auditoria.RegistrarAsync(CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
+            "Categoría de gasto modificada", nameof(CategoriaGasto), categoria.Id.ToString(), anterior, ToDto(categoria));
+
+        return Ok(ToDto(categoria));
+    }
+
+    [HttpDelete("categorias-gasto/{id:guid}")]
+    [Authorize(Roles = Roles.Administrador)]
+    public async Task<IActionResult> DesactivarCategoriaGasto(Guid id)
+    {
+        var categoria = await _db.CategoriasGasto.FindAsync(id);
+        if (categoria is null) return NotFound();
+
+        categoria.Activo = false;
+        await _db.SaveChangesAsync();
+
+        await _auditoria.RegistrarAsync(CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
+            "Categoría de gasto desactivada", nameof(CategoriaGasto), categoria.Id.ToString(), null, null);
+
+        return NoContent();
+    }
+
     private static DenominacionDto ToDto(Denominacion d) => new()
     {
         Id = d.Id,
@@ -162,5 +221,12 @@ public class CatalogosController : ControllerBase
         Nombre = p.Nombre,
         Denominacion = p.Denominacion,
         Activo = p.Activo
+    };
+
+    private static CategoriaGastoDto ToDto(CategoriaGasto c) => new()
+    {
+        Id = c.Id,
+        Nombre = c.Nombre,
+        Activo = c.Activo
     };
 }

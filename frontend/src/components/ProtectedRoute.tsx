@@ -11,8 +11,10 @@ export function ProtectedRoute({
 }) {
   const token = useAuthStore((s) => s.token);
   const roles = useAuthStore((s) => s.roles);
+  const debeCambiarContrasena = useAuthStore((s) => s.debeCambiarContrasena);
 
   if (!token) return <Navigate to="/login" replace />;
+  if (debeCambiarContrasena) return <Navigate to="/cambiar-contrasena" replace />;
   if (requireRole && !roles.includes(requireRole)) return <Navigate to="/" replace />;
 
   return <>{children}</>;

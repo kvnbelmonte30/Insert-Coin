@@ -3,9 +3,12 @@ using Maquinitas.Api.Dtos.Averias;
 using Maquinitas.Api.Services;
 using Maquinitas.Domain.Common;
 using Maquinitas.Domain.Entities.Averias;
+using Maquinitas.Domain.Entities.Identity;
 using Maquinitas.Domain.Entities.Maquinas;
+using Maquinitas.Domain.Entities.Notificaciones;
 using Maquinitas.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,20 +22,29 @@ public class AveriasController : ControllerBase
     private readonly ApplicationDbContext _db;
     private readonly FileStorageService _fileStorage;
     private readonly AuditoriaService _auditoria;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public AveriasController(ApplicationDbContext db, FileStorageService fileStorage, AuditoriaService auditoria)
+    public AveriasController(ApplicationDbContext db, FileStorageService fileStorage, AuditoriaService auditoria, UserManager<ApplicationUser> userManager)
     {
         _db = db;
         _fileStorage = fileStorage;
         _auditoria = auditoria;
+        _userManager = userManager;
     }
 
     [HttpGet("local/{localId:guid}")]
-    public async Task<ActionResult<IEnumerable<ReporteAveriaDto>>> GetByLocal(Guid localId)
+    public async Task<ActionResult<IEnumerable<ReporteAveriaDto>>> GetByLocal(
+        Guid localId,
+        [FromQuery] DateOnly? desde = null,
+        [FromQuery] DateOnly? hasta = null)
     {
         if (!CurrentUser.HasAccessToLocal(User, localId)) return Forbid();
 
-        var reportes = await BaseQuery().Where(r => r.LocalId == localId).OrderByDescending(r => r.Fecha).ToListAsync();
+        var query = BaseQuery().Where(r => r.LocalId == localId);
+        if (desde is not null) query = query.Where(r => r.Fecha >= desde.Value.ToDateTime(TimeOnly.MinValue));
+        if (hasta is not null) query = query.Where(r => r.Fecha < hasta.Value.AddDays(1).ToDateTime(TimeOnly.MinValue));
+
+        var reportes = await query.OrderByDescending(r => r.Fecha).ToListAsync();
         return Ok(reportes.Select(ToDto));
     }
 
@@ -74,6 +86,20 @@ public class AveriasController : ControllerBase
             UsuarioId = CurrentUser.GetId(User),
             Comentario = $"Reporte de avería: {request.Problema}"
         });
+
+        var admins = await _userManager.GetUsersInRoleAsync(Roles.Administrador);
+        var localNombre = await _db.Locales.Where(l => l.Id == request.LocalId).Select(l => l.Nombre).FirstAsync();
+        foreach (var admin in admins)
+        {
+            _db.Set<Notificacion>().Add(new Notificacion
+            {
+                UsuarioId = admin.Id,
+                LocalId = request.LocalId,
+                Tipo = TipoNotificacion.MaquinaReportada,
+                Mensaje = $"{maquina.Nombre} en {localNombre} fue reportada: {request.Problema}.",
+                ReferenciaId = reporte.Id
+            });
+        }
 
         await _db.SaveChangesAsync();
 

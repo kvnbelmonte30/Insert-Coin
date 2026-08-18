@@ -2,6 +2,7 @@ using Maquinitas.Api.Dtos.Auth;
 using Maquinitas.Api.Services;
 using Maquinitas.Domain.Entities.Identity;
 using Maquinitas.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -66,12 +67,13 @@ public class AuthController : ControllerBase
             Nombre = user.Nombre,
             UserName = user.UserName ?? string.Empty,
             Roles = roles,
-            Locales = locales
+            Locales = locales,
+            DebeCambiarContrasena = user.DebeCambiarContrasena
         });
     }
 
     [HttpGet("me")]
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Authorize]
     public async Task<ActionResult<LoginResponse>> Me()
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -91,7 +93,30 @@ public class AuthController : ControllerBase
             Nombre = user.Nombre,
             UserName = user.UserName ?? string.Empty,
             Roles = roles,
-            Locales = locales
+            Locales = locales,
+            DebeCambiarContrasena = user.DebeCambiarContrasena
         });
+    }
+
+    [HttpPost("cambiar-contrasena")]
+    [Authorize]
+    public async Task<IActionResult> CambiarContrasena(CambiarContrasenaRequest request)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId is null) return Unauthorized();
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null) return Unauthorized();
+
+        var result = await _userManager.ChangePasswordAsync(user, request.ContrasenaActual, request.ContrasenaNueva);
+        if (!result.Succeeded)
+        {
+            return BadRequest(new { message = string.Join("; ", result.Errors.Select(e => e.Description)) });
+        }
+
+        user.DebeCambiarContrasena = false;
+        await _userManager.UpdateAsync(user);
+
+        return NoContent();
     }
 }

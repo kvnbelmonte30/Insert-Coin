@@ -26,11 +26,18 @@ public class CierresDiariosController : ControllerBase
     }
 
     [HttpGet("local/{localId:guid}")]
-    public async Task<ActionResult<IEnumerable<CierreDiarioDto>>> GetByLocal(Guid localId)
+    public async Task<ActionResult<IEnumerable<CierreDiarioDto>>> GetByLocal(
+        Guid localId,
+        [FromQuery] DateOnly? desde = null,
+        [FromQuery] DateOnly? hasta = null)
     {
         if (!CurrentUser.HasAccessToLocal(User, localId)) return Forbid();
 
-        var cierres = await BaseQuery().Where(c => c.LocalId == localId).OrderByDescending(c => c.Fecha).ToListAsync();
+        var query = BaseQuery().Where(c => c.LocalId == localId);
+        if (desde is not null) query = query.Where(c => c.Fecha >= desde);
+        if (hasta is not null) query = query.Where(c => c.Fecha <= hasta);
+
+        var cierres = await query.OrderByDescending(c => c.Fecha).ToListAsync();
         return Ok(cierres.Select(ToDto));
     }
 

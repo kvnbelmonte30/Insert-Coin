@@ -1,7 +1,12 @@
 export type TipoDenominacion = "Bolsa" | "Moneda" | "Billete";
 export type ConceptoMovimiento = "Bolsa" | "Moneda" | "Billete" | "Terminal" | "Transferencia" | "Premio" | "Gasto";
 export type EstadoCierre = "Correcto" | "Revisar";
-export type TipoGasto = "General" | "ReposicionFondo" | "Sueldos" | "DepositoAdministrador";
+
+export interface CategoriaGasto {
+  id: string;
+  nombre: string;
+  activo: boolean;
+}
 
 export interface LocalResumen {
   id: string;
@@ -16,6 +21,7 @@ export interface LoginResponse {
   userName: string;
   roles: string[];
   locales: LocalResumen[];
+  debeCambiarContrasena: boolean;
 }
 
 export interface Local {
@@ -80,7 +86,8 @@ export interface Gasto {
   id: string;
   localId: string;
   descripcion: string;
-  tipo: TipoGasto;
+  categoriaGastoId: string;
+  categoriaGastoNombre: string;
   monto: number;
   fecha: string;
   empleadoNombre: string;
@@ -204,6 +211,19 @@ export interface CierreSemanal {
   confirmadoPorNombre: string | null;
   fechaCreacion: string;
   fechaConfirmacion: string | null;
+}
+
+export type TipoNotificacion = "CuentaModificada" | "CierreConDiferencia" | "MaquinaReportada" | "CierreSemanalPendiente";
+
+export interface Notificacion {
+  id: string;
+  localId: string | null;
+  localNombre: string | null;
+  tipo: TipoNotificacion;
+  mensaje: string;
+  referenciaId: string | null;
+  leida: boolean;
+  fechaCreacion: string;
 }
 
 export interface DashboardData {

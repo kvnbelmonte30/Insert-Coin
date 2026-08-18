@@ -13,9 +13,11 @@ import EventRepeatRoundedIcon from "@mui/icons-material/EventRepeatRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import WavesRoundedIcon from "@mui/icons-material/WavesRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { PixelCoin } from "./PixelCoin";
+import { NotificationBell } from "./NotificationBell";
 
 interface NavItem {
   value: string;
@@ -31,6 +33,7 @@ const ADMIN_NAV: NavItem[] = [
   { value: "gastos", label: "Gastos", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
   { value: "cierres-semanales", label: "Cierres semanales", icon: <EventRepeatRoundedIcon fontSize="small" /> },
   { value: "usuarios", label: "Usuarios", icon: <GroupRoundedIcon fontSize="small" /> },
+  { value: "configuracion", label: "Configuración", icon: <TuneRoundedIcon fontSize="small" /> },
 ];
 
 const EMPLEADO_NAV: NavItem[] = [
@@ -158,6 +161,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* desktop user + logout */}
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1.2 }}>
+            <NotificationBell />
             <Box
               sx={{
                 px: 1.2,
@@ -181,13 +185,13 @@ export function Layout({ children }: { children: ReactNode }) {
             </IconButton>
           </Box>
 
-          {/* mobile hamburger */}
-          <IconButton
-            onClick={() => setDrawerOpen(true)}
-            sx={{ display: { xs: "flex", md: "none" }, color: "#f4f6fb" }}
-          >
-            <MenuRoundedIcon />
-          </IconButton>
+          {/* mobile bell + hamburger */}
+          <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 0.5 }}>
+            <NotificationBell />
+            <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: "#f4f6fb" }}>
+              <MenuRoundedIcon />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
 

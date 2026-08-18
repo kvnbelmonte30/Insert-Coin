@@ -1,5 +1,6 @@
 using Maquinitas.Domain.Common;
 using Maquinitas.Domain.Entities.Cuentas;
+using Maquinitas.Domain.Entities.Gastos;
 using Maquinitas.Domain.Entities.Identity;
 using Maquinitas.Domain.Entities.Maquinas;
 using Maquinitas.Domain.Entities.Premios;
@@ -16,6 +17,12 @@ namespace Maquinitas.Infrastructure.Seed;
 /// </summary>
 public static class DbSeeder
 {
+    /// <summary>Fijo para que la migración de datos (Tipo enum -> CategoriaGastoId) pueda referenciarlo de forma determinista.</summary>
+    public static readonly Guid CategoriaGastoGeneralId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    public static readonly Guid CategoriaGastoReposicionId = Guid.Parse("00000000-0000-0000-0000-000000000002");
+    public static readonly Guid CategoriaGastoSueldosId = Guid.Parse("00000000-0000-0000-0000-000000000003");
+    public static readonly Guid CategoriaGastoDepositoId = Guid.Parse("00000000-0000-0000-0000-000000000004");
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
@@ -89,6 +96,15 @@ public static class DbSeeder
                 Nombre = $"${v:0.##}",
                 Denominacion = v
             }));
+        }
+
+        if (!await db.CategoriasGasto.AnyAsync())
+        {
+            db.CategoriasGasto.AddRange(
+                new CategoriaGasto { Id = CategoriaGastoGeneralId, Nombre = "Gasto general" },
+                new CategoriaGasto { Id = CategoriaGastoReposicionId, Nombre = "Reposición de fondo de máquina" },
+                new CategoriaGasto { Id = CategoriaGastoSueldosId, Nombre = "Sueldos de empleados" },
+                new CategoriaGasto { Id = CategoriaGastoDepositoId, Nombre = "Depósito a administrador" });
         }
 
         await db.SaveChangesAsync();

@@ -24,6 +24,19 @@ public class GastoConfiguration : IEntityTypeConfiguration<Gasto>
             .WithMany()
             .HasForeignKey(g => g.EmpleadoId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(g => g.CategoriaGasto)
+            .WithMany(c => c.Gastos)
+            .HasForeignKey(g => g.CategoriaGastoId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class CategoriaGastoConfiguration : IEntityTypeConfiguration<CategoriaGasto>
+{
+    public void Configure(EntityTypeBuilder<CategoriaGasto> builder)
+    {
+        builder.Property(c => c.Nombre).IsRequired().HasMaxLength(100);
     }
 }
 

@@ -8,7 +8,9 @@ interface AuthState {
   nombre: string | null;
   roles: string[];
   locales: LoginResponse["locales"];
+  debeCambiarContrasena: boolean;
   setSession: (data: LoginResponse) => void;
+  setDebeCambiarContrasena: (value: boolean) => void;
   logout: () => void;
   isAdmin: () => boolean;
   isEmpleado: () => boolean;
@@ -22,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
       nombre: null,
       roles: [],
       locales: [],
+      debeCambiarContrasena: false,
       setSession: (data) =>
         set({
           token: data.token,
@@ -29,9 +32,11 @@ export const useAuthStore = create<AuthState>()(
           nombre: data.nombre,
           roles: data.roles,
           locales: data.locales,
+          debeCambiarContrasena: data.debeCambiarContrasena,
         }),
+      setDebeCambiarContrasena: (value) => set({ debeCambiarContrasena: value }),
       logout: () =>
-        set({ token: null, usuarioId: null, nombre: null, roles: [], locales: [] }),
+        set({ token: null, usuarioId: null, nombre: null, roles: [], locales: [], debeCambiarContrasena: false }),
       isAdmin: () => get().roles.includes("Administrador"),
       isEmpleado: () => get().roles.includes("Empleado"),
     }),

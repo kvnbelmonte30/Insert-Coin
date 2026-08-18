@@ -20,20 +20,20 @@ export function LocalDetailPage() {
   const [premios, setPremios] = useState<Premio[]>([]);
   const [cantidades, setCantidades] = useState<Record<string, number>>({});
   const [cierres, setCierres] = useState<CierreDiario[]>([]);
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
 
   const cargar = async () => {
     if (!id) return;
     try {
-      const [localRes, denomRes, premioRes, cierresRes] = await Promise.all([
+      const [localRes, denomRes, premioRes] = await Promise.all([
         api.get<Local>(`/locales/${id}`),
         api.get<Denominacion[]>("/catalogos/denominaciones"),
         api.get<Premio[]>("/catalogos/premios"),
-        api.get<CierreDiario[]>(`/cierres-diarios/local/${id}`),
       ]);
       setLocal(localRes.data);
       setDenominaciones(denomRes.data);
       setPremios(premioRes.data);
-      setCierres(cierresRes.data);
     } catch (err) {
       console.error("Error cargando el detalle del local", err);
       return;
@@ -51,7 +51,15 @@ export function LocalDetailPage() {
 
   useEffect(() => {
     cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    api
+      .get<CierreDiario[]>(`/cierres-diarios/local/${id}`, { params: { desde: desde || undefined, hasta: hasta || undefined } })
+      .then((r) => setCierres(r.data));
+  }, [id, desde, hasta]);
 
   const crearCuenta = async () => {
     const lineas = [
@@ -185,9 +193,31 @@ export function LocalDetailPage() {
       </GlassCard>
 
       <GlassCard sx={{ p: { xs: 2.5, sm: 3 } }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "1.05rem", color: brand.ink, mb: 2 }}>
-          Cierres diarios
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1.5 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: "1.05rem", color: brand.ink }}>
+            Cierres diarios
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1.2 }}>
+            <TextField
+              label="Desde"
+              type="date"
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ width: 155, ...glassFieldLight }}
+              value={desde}
+              onChange={(e) => setDesde(e.target.value)}
+            />
+            <TextField
+              label="Hasta"
+              type="date"
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ width: 155, ...glassFieldLight }}
+              value={hasta}
+              onChange={(e) => setHasta(e.target.value)}
+            />
+          </Box>
+        </Box>
         <Box sx={{ overflowX: "auto" }}>
           <Table size="small" sx={glassTableSx}>
             <TableHead>

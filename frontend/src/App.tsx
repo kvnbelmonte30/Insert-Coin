@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { LoginPage } from "./pages/LoginPage";
+import { CambiarContrasenaPage } from "./pages/CambiarContrasenaPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
 import { LocalesPage } from "./pages/admin/LocalesPage";
 import { LocalDetailPage } from "./pages/admin/LocalDetailPage";
@@ -10,6 +11,7 @@ import { AveriasAdminPage } from "./pages/admin/AveriasAdminPage";
 import { GastosAdminPage } from "./pages/admin/GastosAdminPage";
 import { CierresSemanalesPage } from "./pages/admin/CierresSemanalesPage";
 import { UsuariosPage } from "./pages/admin/UsuariosPage";
+import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
 import { EmpleadoPage } from "./pages/empleado/EmpleadoPage";
 import { AveriasEmpleadoPage } from "./pages/empleado/AveriasEmpleadoPage";
 import { CascadasEmpleadoPage } from "./pages/empleado/CascadasEmpleadoPage";
@@ -30,6 +32,12 @@ function HomeRedirect() {
   return <Navigate to={isAdmin ? "/admin/dashboard" : "/empleado/cuenta"} replace />;
 }
 
+function CambiarContrasenaRoute() {
+  const token = useAuthStore((s) => s.token);
+  if (!token) return <Navigate to="/login" replace />;
+  return <CambiarContrasenaPage />;
+}
+
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -37,6 +45,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/cambiar-contrasena" element={<CambiarContrasenaRoute />} />
 
           <Route
             path="/"
@@ -68,6 +77,7 @@ export default function App() {
             <Route path="gastos" element={<GastosAdminPage />} />
             <Route path="cierres-semanales" element={<CierresSemanalesPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
+            <Route path="configuracion" element={<ConfiguracionPage />} />
           </Route>
 
           <Route

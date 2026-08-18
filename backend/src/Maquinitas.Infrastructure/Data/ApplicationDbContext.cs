@@ -47,6 +47,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<CierreSemanalDetalle> CierreSemanalDetalles => Set<CierreSemanalDetalle>();
 
     public DbSet<Gasto> Gastos => Set<Gasto>();
+    public DbSet<CategoriaGasto> CategoriasGasto => Set<CategoriaGasto>();
     public DbSet<Evidencia> Evidencias => Set<Evidencia>();
 
     public DbSet<ReporteAveria> ReportesAveria => Set<ReporteAveria>();

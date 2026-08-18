@@ -27,12 +27,18 @@ public class GastosController : ControllerBase
     }
 
     [HttpGet("local/{localId:guid}")]
-    public async Task<ActionResult<IEnumerable<GastoDto>>> GetByLocal(Guid localId, [FromQuery] bool soloSinCierre = false)
+    public async Task<ActionResult<IEnumerable<GastoDto>>> GetByLocal(
+        Guid localId,
+        [FromQuery] bool soloSinCierre = false,
+        [FromQuery] DateOnly? desde = null,
+        [FromQuery] DateOnly? hasta = null)
     {
         if (!CurrentUser.HasAccessToLocal(User, localId)) return Forbid();
 
-        var query = _db.Gastos.Include(g => g.Empleado).Include(g => g.Evidencias).Where(g => g.LocalId == localId);
+        var query = BaseQuery().Where(g => g.LocalId == localId);
         if (soloSinCierre) query = query.Where(g => g.CierreDiarioId == null);
+        if (desde is not null) query = query.Where(g => g.Fecha >= desde);
+        if (hasta is not null) query = query.Where(g => g.Fecha <= hasta);
 
         var gastos = await query.OrderByDescending(g => g.FechaRegistro).ToListAsync();
         return Ok(gastos.Select(ToDto));
@@ -45,12 +51,15 @@ public class GastosController : ControllerBase
     {
         if (!CurrentUser.HasAccessToLocal(User, request.LocalId)) return Forbid();
 
+        var categoriaExiste = await _db.CategoriasGasto.AnyAsync(c => c.Id == request.CategoriaGastoId);
+        if (!categoriaExiste) return BadRequest(new { message = "Categoría de gasto inválida." });
+
         var gasto = new Gasto
         {
             LocalId = request.LocalId,
             EmpleadoId = CurrentUser.GetId(User),
             Descripcion = request.Descripcion,
-            Tipo = request.Tipo,
+            CategoriaGastoId = request.CategoriaGastoId,
             Monto = request.Monto,
             Fecha = request.Fecha
         };
@@ -67,7 +76,7 @@ public class GastosController : ControllerBase
         await _auditoria.RegistrarAsync(CurrentUser.GetId(User), CurrentUser.GetNombre(User), request.LocalId,
             "Gasto registrado", nameof(Gasto), gasto.Id.ToString(), null, new { gasto.Descripcion, gasto.Monto });
 
-        var completo = await _db.Gastos.Include(g => g.Empleado).Include(g => g.Evidencias).FirstAsync(g => g.Id == gasto.Id);
+        var completo = await BaseQuery().FirstAsync(g => g.Id == gasto.Id);
         return Ok(ToDto(completo));
     }
 
@@ -82,12 +91,18 @@ public class GastosController : ControllerBase
         return File(stream, contentType);
     }
 
+    private IQueryable<Gasto> BaseQuery() => _db.Gastos
+        .Include(g => g.Empleado)
+        .Include(g => g.Evidencias)
+        .Include(g => g.CategoriaGasto);
+
     private static GastoDto ToDto(Gasto gasto) => new()
     {
         Id = gasto.Id,
         LocalId = gasto.LocalId,
         Descripcion = gasto.Descripcion,
-        Tipo = gasto.Tipo,
+        CategoriaGastoId = gasto.CategoriaGastoId,
+        CategoriaGastoNombre = gasto.CategoriaGasto.Nombre,
         Monto = gasto.Monto,
         Fecha = gasto.Fecha,
         EmpleadoNombre = gasto.Empleado.Nombre,
