@@ -17,6 +17,7 @@ public class Gasto : EntityBase
     public ApplicationUser Empleado { get; set; } = null!;
 
     public string Descripcion { get; set; } = string.Empty;
+    public TipoGasto Tipo { get; set; } = TipoGasto.General;
     public decimal Monto { get; set; }
     public DateOnly Fecha { get; set; }
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;

@@ -50,6 +50,7 @@ public class GastosController : ControllerBase
             LocalId = request.LocalId,
             EmpleadoId = CurrentUser.GetId(User),
             Descripcion = request.Descripcion,
+            Tipo = request.Tipo,
             Monto = request.Monto,
             Fecha = request.Fecha
         };
@@ -86,6 +87,7 @@ public class GastosController : ControllerBase
         Id = gasto.Id,
         LocalId = gasto.LocalId,
         Descripcion = gasto.Descripcion,
+        Tipo = gasto.Tipo,
         Monto = gasto.Monto,
         Fecha = gasto.Fecha,
         EmpleadoNombre = gasto.Empleado.Nombre,

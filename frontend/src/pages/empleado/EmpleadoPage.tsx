@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Dialog,
@@ -25,7 +25,8 @@ import { GlassCard } from "../../components/GlassCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import { brand, dialogBackdropSx, dialogPaperSx, glassFieldLight, glassTableSx, pillButtonSx, pillOutlineButtonSx } from "../../theme/brand";
-import type { Cuenta, Denominacion, Gasto, Premio, CierreDiario } from "../../types";
+import { etiquetaConcepto, ordenarDetalles, TIPO_GASTO_LABEL } from "../../utils/cuenta";
+import type { Cuenta, Denominacion, Gasto, Premio, CierreDiario, TipoGasto } from "../../types";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -34,6 +35,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     </Typography>
   );
 }
+
+const valorDenominacion = (d: Denominacion) => (d.tipo === "Bolsa" ? d.valorPorBolsa ?? 0 : d.valor);
 
 export function EmpleadoPage() {
   const locales = useAuthStore((s) => s.locales);
@@ -74,6 +77,16 @@ export function EmpleadoPage() {
     setResultado(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localId]);
+
+  const totalCapturado = useMemo(() => {
+    const totalDenominaciones = denominaciones.reduce(
+      (sum, d) => sum + (cantidades[d.id] ?? 0) * valorDenominacion(d),
+      0
+    );
+    const totalPremios = premios.reduce((sum, p) => sum + (cantidades[p.id] ?? 0) * p.denominacion, 0);
+    const totalGastos = gastos.reduce((sum, g) => sum + g.monto, 0);
+    return totalDenominaciones + totalPremios + (terminal || 0) + (transferencia || 0) + totalGastos;
+  }, [denominaciones, premios, cantidades, terminal, transferencia, gastos]);
 
   const registrarCierre = async () => {
     const lineas = [
@@ -145,9 +158,9 @@ export function EmpleadoPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cuenta.detalles.map((d) => (
+                {ordenarDetalles(cuenta.detalles).map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell sx={{ fontWeight: 600 }}>{d.denominacionNombre ?? d.premioNombre}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{etiquetaConcepto(d)}</TableCell>
                     <TableCell align="right">{d.cantidad}</TableCell>
                     <TableCell align="right">${d.subtotal.toLocaleString()}</TableCell>
                   </TableRow>
@@ -235,7 +248,12 @@ export function EmpleadoPage() {
                 <TableBody>
                   {gastos.map((g) => (
                     <TableRow key={g.id}>
-                      <TableCell sx={{ fontWeight: 600 }}>{g.descripcion}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {g.descripcion}
+                        <Typography component="div" sx={{ fontSize: "0.72rem", color: brand.inkMuted, fontWeight: 400 }}>
+                          {TIPO_GASTO_LABEL[g.tipo]}
+                        </Typography>
+                      </TableCell>
                       <TableCell align="right">${g.monto.toLocaleString()}</TableCell>
                       <TableCell align="right">
                         <StatusPill label={g.tieneEvidencia ? "Con evidencia" : "Sin evidencia"} tone={g.tieneEvidencia ? "success" : "neutral"} />
@@ -254,7 +272,25 @@ export function EmpleadoPage() {
             </Box>
           </Box>
 
-          <Box sx={{ mt: 3 }}>
+          <Box
+            sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: "1px solid rgba(14,23,48,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: brand.inkFaint, textTransform: "uppercase", letterSpacing: "0.4px" }}>
+              Total capturado hasta ahora
+            </Typography>
+            <Typography sx={{ fontSize: "1.25rem", fontWeight: 800, color: brand.goldDark }}>
+              ${totalCapturado.toLocaleString()}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
             <Box component="button" onClick={registrarCierre} sx={{ ...pillButtonSx, py: 1.3, px: 3, fontSize: "0.95rem" }}>
               Registrar cierre diario
             </Box>
@@ -324,6 +360,7 @@ function GastoDialog({
   onGuardado: () => void;
 }) {
   const [descripcion, setDescripcion] = useState("");
+  const [tipo, setTipo] = useState<TipoGasto>("General");
   const [monto, setMonto] = useState<number>(0);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -334,12 +371,14 @@ function GastoDialog({
       const formData = new FormData();
       formData.append("LocalId", localId);
       formData.append("Descripcion", descripcion);
+      formData.append("Tipo", tipo);
       formData.append("Monto", String(monto));
       formData.append("Fecha", new Date().toISOString().slice(0, 10));
       if (archivo) formData.append("evidencias", archivo);
 
       await api.post("/gastos", formData, { headers: { "Content-Type": "multipart/form-data" } });
       setDescripcion("");
+      setTipo("General");
       setMonto(0);
       setArchivo(null);
       onGuardado();
@@ -388,6 +427,16 @@ function GastoDialog({
           sx={glassFieldLight}
           autoFocus
         />
+        <FormControl fullWidth margin="dense" sx={glassFieldLight}>
+          <InputLabel>Tipo de gasto</InputLabel>
+          <Select label="Tipo de gasto" value={tipo} onChange={(e) => setTipo(e.target.value as TipoGasto)}>
+            {(Object.keys(TIPO_GASTO_LABEL) as TipoGasto[]).map((t) => (
+              <MenuItem key={t} value={t}>
+                {TIPO_GASTO_LABEL[t]}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <TextField
           label="Monto"
           type="number"

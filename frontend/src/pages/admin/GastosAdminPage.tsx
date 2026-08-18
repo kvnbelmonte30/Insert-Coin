@@ -6,6 +6,7 @@ import { GlassCard } from "../../components/GlassCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import { brand, glassFieldLight, glassTableSx } from "../../theme/brand";
+import { TIPO_GASTO_LABEL } from "../../utils/cuenta";
 import type { Gasto, Local } from "../../types";
 
 export function GastosAdminPage() {
@@ -52,6 +53,7 @@ export function GastosAdminPage() {
             <TableRow>
               <TableCell>Fecha</TableCell>
               <TableCell>Descripción</TableCell>
+              <TableCell>Tipo</TableCell>
               <TableCell align="right">Monto</TableCell>
               <TableCell>Empleado</TableCell>
               <TableCell>Evidencia</TableCell>
@@ -62,6 +64,7 @@ export function GastosAdminPage() {
               <TableRow key={g.id}>
                 <TableCell sx={{ color: brand.inkMuted, whiteSpace: "nowrap" }}>{g.fecha}</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{g.descripcion}</TableCell>
+                <TableCell sx={{ color: brand.inkMuted, whiteSpace: "nowrap" }}>{TIPO_GASTO_LABEL[g.tipo]}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>
                   ${g.monto.toLocaleString()}
                 </TableCell>
@@ -76,7 +79,7 @@ export function GastosAdminPage() {
             ))}
             {gastos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} sx={{ textAlign: "center", color: brand.inkMuted, py: 4 }}>
+                <TableCell colSpan={6} sx={{ textAlign: "center", color: brand.inkMuted, py: 4 }}>
                   Sin gastos registrados en este local.
                 </TableCell>
               </TableRow>

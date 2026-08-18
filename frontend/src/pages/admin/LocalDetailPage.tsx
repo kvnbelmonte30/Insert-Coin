@@ -7,6 +7,7 @@ import { api } from "../../api/client";
 import { GlassCard } from "../../components/GlassCard";
 import { StatusPill } from "../../components/StatusPill";
 import { brand, glassFieldLight, glassTableSx, pillButtonSx, pillOutlineButtonSx } from "../../theme/brand";
+import { etiquetaConcepto, ordenarDetalles } from "../../utils/cuenta";
 import type { Cuenta, Denominacion, Local, Premio, CierreDiario } from "../../types";
 
 export function LocalDetailPage() {
@@ -165,7 +166,7 @@ export function LocalDetailPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cuenta.detalles.map((d) => (
+                {ordenarDetalles(cuenta.detalles).map((d) => (
                   <FilaEditable key={d.id} detalle={d} onGuardar={actualizarLinea} />
                 ))}
                 <TableRow>
@@ -239,7 +240,7 @@ function FilaEditable({
 
   return (
     <TableRow>
-      <TableCell sx={{ fontWeight: 600 }}>{detalle.denominacionNombre ?? detalle.premioNombre}</TableCell>
+      <TableCell sx={{ fontWeight: 600 }}>{etiquetaConcepto(detalle)}</TableCell>
       <TableCell align="right">
         <TextField
           type="number"

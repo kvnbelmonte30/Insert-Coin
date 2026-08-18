@@ -1,6 +1,7 @@
 export type TipoDenominacion = "Bolsa" | "Moneda" | "Billete";
 export type ConceptoMovimiento = "Bolsa" | "Moneda" | "Billete" | "Terminal" | "Transferencia" | "Premio" | "Gasto";
 export type EstadoCierre = "Correcto" | "Revisar";
+export type TipoGasto = "General" | "ReposicionFondo" | "Sueldos" | "DepositoAdministrador";
 
 export interface LocalResumen {
   id: string;
@@ -79,6 +80,7 @@ export interface Gasto {
   id: string;
   localId: string;
   descripcion: string;
+  tipo: TipoGasto;
   monto: number;
   fecha: string;
   empleadoNombre: string;
