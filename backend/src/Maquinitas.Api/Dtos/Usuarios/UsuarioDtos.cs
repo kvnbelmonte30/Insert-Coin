@@ -30,3 +30,16 @@ public class AsignarLocalesRequest
 {
     public IList<Guid> LocalIds { get; set; } = new List<Guid>();
 }
+
+public class EditarUsuarioRequest
+{
+    public string Nombre { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Rol { get; set; } = string.Empty;
+    public IList<Guid> LocalIds { get; set; } = new List<Guid>();
+}
+
+public class RestablecerContrasenaRequest
+{
+    public string NuevaContrasena { get; set; } = string.Empty;
+}

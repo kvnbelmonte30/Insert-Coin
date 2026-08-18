@@ -81,6 +81,75 @@ public class UsuariosController : ControllerBase
         return CreatedAtAction(nameof(GetAll), ToDto(user, new List<string> { request.Rol }));
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<UsuarioDto>> Update(Guid id, EditarUsuarioRequest request)
+    {
+        if (request.Rol != Roles.Administrador && request.Rol != Roles.Empleado)
+        {
+            return BadRequest(new { message = "Rol inválido. Debe ser Administrador o Empleado." });
+        }
+
+        var user = await _db.Users.Include(u => u.UsuarioLocales).FirstOrDefaultAsync(u => u.Id == id);
+        if (user is null) return NotFound();
+
+        var rolesAnteriores = await _userManager.GetRolesAsync(user);
+        var anterior = new { user.Nombre, user.Email, Roles = rolesAnteriores, LocalIds = user.UsuarioLocales.Select(ul => ul.LocalId) };
+
+        user.Nombre = request.Nombre;
+        if (!string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            await _userManager.SetEmailAsync(user, request.Email);
+        }
+        await _userManager.UpdateAsync(user);
+
+        if (!rolesAnteriores.Contains(request.Rol))
+        {
+            await _userManager.RemoveFromRolesAsync(user, rolesAnteriores);
+            await _userManager.AddToRoleAsync(user, request.Rol);
+        }
+
+        _db.UsuarioLocales.RemoveRange(user.UsuarioLocales);
+        foreach (var localId in request.LocalIds.Distinct())
+        {
+            _db.UsuarioLocales.Add(new UsuarioLocal { UsuarioId = id, LocalId = localId });
+        }
+        await _db.SaveChangesAsync();
+
+        await _auditoria.RegistrarAsync(
+            CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
+            "Usuario modificado", nameof(ApplicationUser), user.Id.ToString(), anterior,
+            new { request.Nombre, request.Email, request.Rol, request.LocalIds });
+
+        var completo = await _db.Users.Include(u => u.UsuarioLocales).FirstAsync(u => u.Id == id);
+        var roles = await _userManager.GetRolesAsync(completo);
+        return Ok(ToDto(completo, roles));
+    }
+
+    [HttpPost("{id:guid}/restablecer-contrasena")]
+    public async Task<IActionResult> RestablecerContrasena(Guid id, RestablecerContrasenaRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null) return NotFound();
+
+        var removeResult = await _userManager.RemovePasswordAsync(user);
+        if (!removeResult.Succeeded)
+        {
+            return BadRequest(new { message = string.Join("; ", removeResult.Errors.Select(e => e.Description)) });
+        }
+
+        var addResult = await _userManager.AddPasswordAsync(user, request.NuevaContrasena);
+        if (!addResult.Succeeded)
+        {
+            return BadRequest(new { message = string.Join("; ", addResult.Errors.Select(e => e.Description)) });
+        }
+
+        await _auditoria.RegistrarAsync(
+            CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
+            "Contraseña restablecida", nameof(ApplicationUser), user.Id.ToString(), null, null);
+
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}/estado")]
     public async Task<IActionResult> UpdateEstado(Guid id, ActualizarEstadoUsuarioRequest request)
     {
