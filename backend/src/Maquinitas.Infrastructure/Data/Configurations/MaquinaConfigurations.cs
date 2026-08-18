@@ -1,3 +1,4 @@
+using Maquinitas.Domain.Entities.Identity;
 using Maquinitas.Domain.Entities.Maquinas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -9,6 +10,17 @@ public class PropietarioConfiguration : IEntityTypeConfiguration<Propietario>
     public void Configure(EntityTypeBuilder<Propietario> builder)
     {
         builder.Property(p => p.Nombre).IsRequired().HasMaxLength(150);
+    }
+}
+
+public class ApplicationUserPropietarioConfiguration : IEntityTypeConfiguration<ApplicationUser>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    {
+        builder.HasOne(u => u.Propietario)
+            .WithMany()
+            .HasForeignKey(u => u.PropietarioId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 

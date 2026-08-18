@@ -41,8 +41,8 @@ public class AveriasController : ControllerBase
         if (!CurrentUser.HasAccessToLocal(User, localId)) return Forbid();
 
         var query = BaseQuery().Where(r => r.LocalId == localId);
-        if (desde is not null) query = query.Where(r => r.Fecha >= desde.Value.ToDateTime(TimeOnly.MinValue));
-        if (hasta is not null) query = query.Where(r => r.Fecha < hasta.Value.AddDays(1).ToDateTime(TimeOnly.MinValue));
+        if (desde is not null) query = query.Where(r => r.Fecha >= DateTime.SpecifyKind(desde.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc));
+        if (hasta is not null) query = query.Where(r => r.Fecha < DateTime.SpecifyKind(hasta.Value.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc));
 
         var reportes = await query.OrderByDescending(r => r.Fecha).ToListAsync();
         return Ok(reportes.Select(ToDto));

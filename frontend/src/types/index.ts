@@ -42,6 +42,8 @@ export interface Usuario {
   activo: boolean;
   roles: string[];
   localIds: string[];
+  propietarioId: string | null;
+  propietarioNombre: string | null;
 }
 
 export interface Denominacion {
@@ -237,4 +239,45 @@ export interface DashboardData {
   gastosPendientesEvidencia: number;
   totalAcumuladoSemanaActual: number;
   totalesPorLocal: { localId: string; localNombre: string; semanaNumero: number; totalAcumulado: number }[];
+}
+
+export interface PropietarioResumen {
+  id: string;
+  nombre: string;
+  totalMaquinas: number;
+}
+
+export interface Conteo {
+  etiqueta: string;
+  cantidad: number;
+}
+
+export interface MaquinaResumen {
+  id: string;
+  nombre: string;
+  tipoNombre: string;
+  localNombre: string;
+  estado: string;
+  averiasUltimos30Dias: number;
+}
+
+export interface AveriaTendencia {
+  periodo: string;
+  inicioSemana: string;
+  cantidad: number;
+}
+
+export interface PropietarioDashboardData {
+  propietarioId: string;
+  propietarioNombre: string;
+  totalMaquinas: number;
+  maquinasPorEstado: Conteo[];
+  maquinasPorTipo: Conteo[];
+  maquinas: MaquinaResumen[];
+  averiasUltimos30Dias: number;
+  averiasUltimos90Dias: number;
+  averiasPorSemana: AveriaTendencia[];
+  tiempoPromedioReparacionHoras: number | null;
+  totalesPorLocalOperando: { localId: string; localNombre: string; semanaNumero: number; totalAcumulado: number }[];
+  totalAcumuladoLocalesOperando: number;
 }

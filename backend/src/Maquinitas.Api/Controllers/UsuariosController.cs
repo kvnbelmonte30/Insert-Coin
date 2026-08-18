@@ -30,7 +30,7 @@ public class UsuariosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll()
     {
-        var usuarios = await _db.Users.Include(u => u.UsuarioLocales).OrderBy(u => u.Nombre).ToListAsync();
+        var usuarios = await _db.Users.Include(u => u.UsuarioLocales).Include(u => u.Propietario).OrderBy(u => u.Nombre).ToListAsync();
 
         var result = new List<UsuarioDto>();
         foreach (var u in usuarios)
@@ -56,7 +56,8 @@ public class UsuariosController : ControllerBase
             Email = request.Email,
             Nombre = request.Nombre,
             Activo = true,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            PropietarioId = request.PropietarioId
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -76,9 +77,10 @@ public class UsuariosController : ControllerBase
         await _auditoria.RegistrarAsync(
             CurrentUser.GetId(User), CurrentUser.GetNombre(User), null,
             "Usuario creado", nameof(ApplicationUser), user.Id.ToString(), null,
-            new { user.UserName, user.Nombre, request.Rol, request.LocalIds });
+            new { user.UserName, user.Nombre, request.Rol, request.LocalIds, request.PropietarioId });
 
-        return CreatedAtAction(nameof(GetAll), ToDto(user, new List<string> { request.Rol }));
+        var creado = await _db.Users.Include(u => u.Propietario).FirstAsync(u => u.Id == user.Id);
+        return CreatedAtAction(nameof(GetAll), ToDto(creado, new List<string> { request.Rol }));
     }
 
     [HttpPut("{id:guid}")]
@@ -96,6 +98,7 @@ public class UsuariosController : ControllerBase
         var anterior = new { user.Nombre, user.Email, Roles = rolesAnteriores, LocalIds = user.UsuarioLocales.Select(ul => ul.LocalId) };
 
         user.Nombre = request.Nombre;
+        user.PropietarioId = request.PropietarioId;
         if (!string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
         {
             await _userManager.SetEmailAsync(user, request.Email);
@@ -120,7 +123,7 @@ public class UsuariosController : ControllerBase
             "Usuario modificado", nameof(ApplicationUser), user.Id.ToString(), anterior,
             new { request.Nombre, request.Email, request.Rol, request.LocalIds });
 
-        var completo = await _db.Users.Include(u => u.UsuarioLocales).FirstAsync(u => u.Id == id);
+        var completo = await _db.Users.Include(u => u.UsuarioLocales).Include(u => u.Propietario).FirstAsync(u => u.Id == id);
         var roles = await _userManager.GetRolesAsync(completo);
         return Ok(ToDto(completo, roles));
     }
@@ -202,6 +205,8 @@ public class UsuariosController : ControllerBase
         Nombre = user.Nombre,
         Activo = user.Activo,
         Roles = roles,
-        LocalIds = user.UsuarioLocales.Select(ul => ul.LocalId).ToList()
+        LocalIds = user.UsuarioLocales.Select(ul => ul.LocalId).ToList(),
+        PropietarioId = user.PropietarioId,
+        PropietarioNombre = user.Propietario?.Nombre
     };
 }

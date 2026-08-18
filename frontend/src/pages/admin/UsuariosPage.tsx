@@ -29,27 +29,47 @@ import { GlassCard } from "../../components/GlassCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import { brand, dialogBackdropSx, dialogPaperSx, glassFieldLight, glassTableSx, pillButtonSx } from "../../theme/brand";
-import type { Local, Usuario } from "../../types";
+import type { Local, Propietario, Usuario } from "../../types";
 
-const emptyForm = { userName: "", email: "", password: "", nombre: "", rol: "Empleado", localIds: [] as string[] };
+const emptyForm = {
+  userName: "",
+  email: "",
+  password: "",
+  nombre: "",
+  rol: "Empleado",
+  localIds: [] as string[],
+  propietarioId: "",
+};
 
 export function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [locales, setLocales] = useState<Local[]>([]);
+  const [propietarios, setPropietarios] = useState<Propietario[]>([]);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
   const [editTarget, setEditTarget] = useState<Usuario | null>(null);
-  const [editForm, setEditForm] = useState({ nombre: "", email: "", rol: "Empleado", localIds: [] as string[] });
+  const [editForm, setEditForm] = useState({
+    nombre: "",
+    email: "",
+    rol: "Empleado",
+    localIds: [] as string[],
+    propietarioId: "",
+  });
 
   const [resetTarget, setResetTarget] = useState<Usuario | null>(null);
   const [resetPassword, setResetPassword] = useState("");
 
   const cargar = async () => {
-    const [u, l] = await Promise.all([api.get<Usuario[]>("/usuarios"), api.get<Local[]>("/locales")]);
+    const [u, l, p] = await Promise.all([
+      api.get<Usuario[]>("/usuarios"),
+      api.get<Local[]>("/locales"),
+      api.get<Propietario[]>("/propietarios"),
+    ]);
     setUsuarios(u.data);
     setLocales(l.data);
+    setPropietarios(p.data);
   };
 
   useEffect(() => {
@@ -59,7 +79,7 @@ export function UsuariosPage() {
   const crear = async () => {
     setSaving(true);
     try {
-      await api.post("/usuarios", form);
+      await api.post("/usuarios", { ...form, propietarioId: form.propietarioId || null });
       setOpen(false);
       setForm(emptyForm);
       cargar();
@@ -80,6 +100,7 @@ export function UsuariosPage() {
       email: usuario.email,
       rol: usuario.roles[0] ?? "Empleado",
       localIds: usuario.localIds,
+      propietarioId: usuario.propietarioId ?? "",
     });
   };
 
@@ -87,7 +108,7 @@ export function UsuariosPage() {
     if (!editTarget) return;
     setSaving(true);
     try {
-      await api.put(`/usuarios/${editTarget.id}`, editForm);
+      await api.put(`/usuarios/${editTarget.id}`, { ...editForm, propietarioId: editForm.propietarioId || null });
       setEditTarget(null);
       cargar();
     } finally {
@@ -130,6 +151,7 @@ export function UsuariosPage() {
               <TableCell>Usuario</TableCell>
               <TableCell>Rol</TableCell>
               <TableCell>Locales</TableCell>
+              <TableCell>Propietario</TableCell>
               <TableCell align="right">Estado</TableCell>
               <TableCell align="right"></TableCell>
             </TableRow>
@@ -145,6 +167,7 @@ export function UsuariosPage() {
                   ))}
                 </TableCell>
                 <TableCell sx={{ color: brand.inkMuted }}>{u.localIds.map(nombreLocal).join(", ") || "—"}</TableCell>
+                <TableCell sx={{ color: brand.inkMuted }}>{u.propietarioNombre ?? "—"}</TableCell>
                 <TableCell align="right">
                   <Switch checked={u.activo} onChange={() => toggleActivo(u)} />
                 </TableCell>
@@ -162,7 +185,7 @@ export function UsuariosPage() {
             ))}
             {usuarios.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: "center", color: brand.inkMuted, py: 4 }}>
+                <TableCell colSpan={7} sx={{ textAlign: "center", color: brand.inkMuted, py: 4 }}>
                   Sin usuarios registrados.
                 </TableCell>
               </TableRow>
@@ -261,6 +284,21 @@ export function UsuariosPage() {
               ))}
             </Select>
           </FormControl>
+          <FormControl fullWidth margin="dense" sx={glassFieldLight}>
+            <InputLabel>Propietario asociado (opcional)</InputLabel>
+            <Select
+              label="Propietario asociado (opcional)"
+              value={form.propietarioId}
+              onChange={(e) => setForm({ ...form, propietarioId: e.target.value })}
+            >
+              <MenuItem value="">Sin propietario asociado</MenuItem>
+              {propietarios.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Box
             component="button"
@@ -332,6 +370,21 @@ export function UsuariosPage() {
                 <MenuItem key={l.id} value={l.id}>
                   <Checkbox checked={editForm.localIds.includes(l.id)} />
                   <ListItemText primary={l.nombre} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense" sx={glassFieldLight}>
+            <InputLabel>Propietario asociado (opcional)</InputLabel>
+            <Select
+              label="Propietario asociado (opcional)"
+              value={editForm.propietarioId}
+              onChange={(e) => setEditForm({ ...editForm, propietarioId: e.target.value })}
+            >
+              <MenuItem value="">Sin propietario asociado</MenuItem>
+              {propietarios.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.nombre}
                 </MenuItem>
               ))}
             </Select>

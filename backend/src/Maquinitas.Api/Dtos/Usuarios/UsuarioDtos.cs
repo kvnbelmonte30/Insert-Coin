@@ -9,6 +9,8 @@ public class UsuarioDto
     public bool Activo { get; set; }
     public IList<string> Roles { get; set; } = new List<string>();
     public IList<Guid> LocalIds { get; set; } = new List<Guid>();
+    public Guid? PropietarioId { get; set; }
+    public string? PropietarioNombre { get; set; }
 }
 
 public class CrearUsuarioRequest
@@ -19,6 +21,7 @@ public class CrearUsuarioRequest
     public string Nombre { get; set; } = string.Empty;
     public string Rol { get; set; } = string.Empty;
     public IList<Guid> LocalIds { get; set; } = new List<Guid>();
+    public Guid? PropietarioId { get; set; }
 }
 
 public class ActualizarEstadoUsuarioRequest
@@ -37,6 +40,7 @@ public class EditarUsuarioRequest
     public string Email { get; set; } = string.Empty;
     public string Rol { get; set; } = string.Empty;
     public IList<Guid> LocalIds { get; set; } = new List<Guid>();
+    public Guid? PropietarioId { get; set; }
 }
 
 public class RestablecerContrasenaRequest
