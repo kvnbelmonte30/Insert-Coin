@@ -30,7 +30,7 @@ public class CorteMaquinaDto
     public string MaquinaNombre { get; set; } = string.Empty;
     public Guid LocalId { get; set; }
     public string LocalNombre { get; set; } = string.Empty;
-    public string EmpleadoNombre { get; set; } = string.Empty;
+    public string RegistradoPorNombre { get; set; } = string.Empty;
     public DateOnly Fecha { get; set; }
     public string? Comentario { get; set; }
     public decimal Total { get; set; }

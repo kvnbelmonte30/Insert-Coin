@@ -20,9 +20,9 @@ public class CorteMaquinaConfiguration : IEntityTypeConfiguration<CorteMaquina>
             .HasForeignKey(c => c.LocalId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(c => c.Empleado)
+        builder.HasOne(c => c.RegistradoPor)
             .WithMany()
-            .HasForeignKey(c => c.EmpleadoId)
+            .HasForeignKey(c => c.RegistradoPorId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -16,7 +16,6 @@ import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
 import { EmpleadoPage } from "./pages/empleado/EmpleadoPage";
 import { AveriasEmpleadoPage } from "./pages/empleado/AveriasEmpleadoPage";
 import { CascadasEmpleadoPage } from "./pages/empleado/CascadasEmpleadoPage";
-import { CorteMaquinaEmpleadoPage } from "./pages/empleado/CorteMaquinaEmpleadoPage";
 import { CierreSemanalEmpleadoPage } from "./pages/empleado/CierreSemanalEmpleadoPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/Layout";
@@ -96,7 +95,6 @@ export default function App() {
             <Route path="cuenta" element={<EmpleadoPage />} />
             <Route path="averias" element={<AveriasEmpleadoPage />} />
             <Route path="cascadas" element={<CascadasEmpleadoPage />} />
-            <Route path="cortes" element={<CorteMaquinaEmpleadoPage />} />
             <Route path="cierre-semanal" element={<CierreSemanalEmpleadoPage />} />
           </Route>
 

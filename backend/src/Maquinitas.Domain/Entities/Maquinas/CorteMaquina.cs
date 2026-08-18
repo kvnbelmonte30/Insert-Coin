@@ -16,8 +16,8 @@ public class CorteMaquina : EntityBase
     public Guid LocalId { get; set; }
     public Local Local { get; set; } = null!;
 
-    public Guid EmpleadoId { get; set; }
-    public ApplicationUser Empleado { get; set; } = null!;
+    public Guid RegistradoPorId { get; set; }
+    public ApplicationUser RegistradoPor { get; set; } = null!;
 
     public DateOnly Fecha { get; set; }
     public string? Comentario { get; set; }

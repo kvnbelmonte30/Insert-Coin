@@ -179,7 +179,7 @@ export interface CorteMaquina {
   maquinaNombre: string;
   localId: string;
   localNombre: string;
-  empleadoNombre: string;
+  registradoPorNombre: string;
   fecha: string;
   comentario: string | null;
   total: number;

@@ -12,7 +12,7 @@ namespace Maquinitas.Api.Controllers;
 
 [ApiController]
 [Route("api/maquinas/{maquinaId:guid}/cortes")]
-[Authorize]
+[Authorize(Roles = Roles.Administrador)]
 public class CortesMaquinaController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
@@ -43,7 +43,6 @@ public class CortesMaquinaController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = Roles.Empleado)]
     public async Task<ActionResult<CorteMaquinaDto>> Registrar(Guid maquinaId, RegistrarCorteMaquinaRequest request)
     {
         var maquina = await _db.Maquinas.FindAsync(maquinaId);
@@ -59,7 +58,7 @@ public class CortesMaquinaController : ControllerBase
         {
             MaquinaId = maquinaId,
             LocalId = maquina.LocalId,
-            EmpleadoId = CurrentUser.GetId(User),
+            RegistradoPorId = CurrentUser.GetId(User),
             Fecha = request.Fecha,
             Comentario = request.Comentario
         };
@@ -111,7 +110,7 @@ public class CortesMaquinaController : ControllerBase
     private IQueryable<CorteMaquina> BaseQuery() => _db.CortesMaquina
         .Include(c => c.Maquina)
         .Include(c => c.Local)
-        .Include(c => c.Empleado)
+        .Include(c => c.RegistradoPor)
         .Include(c => c.Detalles).ThenInclude(d => d.Denominacion)
         .Include(c => c.Detalles).ThenInclude(d => d.Premio);
 
@@ -122,7 +121,7 @@ public class CortesMaquinaController : ControllerBase
         MaquinaNombre = c.Maquina.Nombre,
         LocalId = c.LocalId,
         LocalNombre = c.Local.Nombre,
-        EmpleadoNombre = c.Empleado.Nombre,
+        RegistradoPorNombre = c.RegistradoPor.Nombre,
         Fecha = c.Fecha,
         Comentario = c.Comentario,
         Total = c.Total,
