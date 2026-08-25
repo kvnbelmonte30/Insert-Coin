@@ -41,6 +41,16 @@ public class Program
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 
+        if (builder.Environment.IsProduction() &&
+            (string.IsNullOrWhiteSpace(jwtSettings.Key) ||
+             jwtSettings.Key.StartsWith("CAMBIAR_ESTA_LLAVE", StringComparison.OrdinalIgnoreCase) ||
+             jwtSettings.Key.Length < 32))
+        {
+            throw new InvalidOperationException(
+                "Jwt:Key no está configurada de forma segura para producción. Define la variable de entorno Jwt__Key " +
+                "(en Render: generateValue: true) en vez de usar el valor de ejemplo de appsettings.json.");
+        }
+
         builder.Services
             .AddAuthentication(options =>
             {

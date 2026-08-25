@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Maquinitas.Domain.Common;
 using Maquinitas.Domain.Entities.Cuentas;
 using Maquinitas.Domain.Entities.Gastos;
@@ -7,6 +8,7 @@ using Maquinitas.Domain.Entities.Premios;
 using Maquinitas.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Maquinitas.Infrastructure.Seed;
@@ -41,19 +43,34 @@ public static class DbSeeder
 
         if (!await userManager.Users.AnyAsync())
         {
+            var configuration = services.GetRequiredService<IConfiguration>();
+            var configuredPassword = configuration["SEED_ADMIN_PASSWORD"];
+            var generated = string.IsNullOrWhiteSpace(configuredPassword);
+            var seedPassword = generated ? GenerateRandomPassword() : configuredPassword!;
+
             var admin = new ApplicationUser
             {
                 UserName = "admin",
                 Email = "admin@maquinitas.local",
                 EmailConfirmed = true,
                 Nombre = "Administrador",
-                Activo = true
+                Activo = true,
+                DebeCambiarContrasena = true
             };
 
-            var result = await userManager.CreateAsync(admin, "Admin#2026!");
+            var result = await userManager.CreateAsync(admin, seedPassword);
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(admin, Roles.Administrador);
+
+                if (generated)
+                {
+                    Console.WriteLine("========================================================");
+                    Console.WriteLine("[DbSeeder] No se definió SEED_ADMIN_PASSWORD: se generó una contraseña inicial aleatoria.");
+                    Console.WriteLine($"[DbSeeder] Usuario: admin  |  Contraseña temporal: {seedPassword}");
+                    Console.WriteLine("[DbSeeder] Guárdala ahora -- no se volverá a mostrar. Se pedirá cambiarla en el primer inicio de sesión.");
+                    Console.WriteLine("========================================================");
+                }
             }
         }
 
@@ -108,5 +125,32 @@ public static class DbSeeder
         }
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>Contraseña aleatoria que cumple la política de Identity (mayúscula, minúscula, dígito, 16 caracteres).</summary>
+    private static string GenerateRandomPassword()
+    {
+        const string lower = "abcdefghijkmnopqrstuvwxyz";
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string digits = "23456789";
+        const string all = lower + upper + digits;
+
+        Span<char> chars = stackalloc char[16];
+        chars[0] = lower[RandomNumberGenerator.GetInt32(lower.Length)];
+        chars[1] = upper[RandomNumberGenerator.GetInt32(upper.Length)];
+        chars[2] = digits[RandomNumberGenerator.GetInt32(digits.Length)];
+        for (var i = 3; i < chars.Length; i++)
+        {
+            chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
+        }
+
+        // Baraja para que las posiciones fijas (0-2) no sean siempre predecibles por tipo.
+        for (var i = chars.Length - 1; i > 0; i--)
+        {
+            var j = RandomNumberGenerator.GetInt32(i + 1);
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        return new string(chars);
     }
 }

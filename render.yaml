@@ -22,6 +22,8 @@ services:
           property: connectionString
       - key: Jwt__Key
         generateValue: true
+      - key: SEED_ADMIN_PASSWORD
+        generateValue: true
       - key: Jwt__Issuer
         value: Maquinitas.Api
       - key: Jwt__Audience
